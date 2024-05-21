@@ -21,7 +21,7 @@ Diffusion coefficients are evaluted based on two assumptions:
    Diffusion coefficients are given by Eq. 12.178 in [1]
    $$D_k = \left(\sum_{j\neq k} \frac{X_j}{D_{jk}} + \frac{X_k}{1-Y_k}\sum_{j\neq k} \frac{Y_j}{D_{jk}}\right)^{-1}$$
 3. **Constant Lewis number diffusion coefficients**
-   $$D_k = \frac{\lambda}{C_p}\frac{1}{\mathrm{Le}}$$
+   $$D_k = \frac{\lambda}{c_p}\frac{1}{\mathrm{Le}}$$
 
 In LES-models, additional subgrid scale diffusion is added using eddy diffusivity concept similarly as in the OpenFOAM's native transport models. Turbulent mass diffusion coefficients are calculated from the turbulent thermal diffusivity using constant turbulent Prantl and Schmidt numbers defined in the model dictionary. 
 
@@ -34,7 +34,7 @@ This library implements two models for evaluating the term $\nabla\cdot\bf q$ in
     A correction term is also included that stabilizes the equation.  
     This approach is used in the native implementation of FickianFourier in Openfoam 
 2. **Reformulate in terms of entalphy (recommended)**
-    $$-\lambda \nabla T = -\frac{\lambda}{C_p} \nabla h_s  + \frac{\lambda}{C_p}\sum_{k=1}^N h_k \nabla Y_k$$
+    $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
     The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications, the native explicit formulation should be used, when the default coupled temperature boundary condition is used.
 
 ## Why OpenFOAM's native implementation "FickianFourier" is unstable? 
