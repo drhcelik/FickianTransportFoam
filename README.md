@@ -37,7 +37,7 @@ This library implements two models for evaluating the term $\nabla\cdot\bf q$ in
    Reformulate in terms of entalphy using the relation $dh_{s,k}=c_{p,k}dT$
    $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
 > [!NOTE]
-> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications, the native explicit formulation should be used, when the default coupled temperature boundary condition is used.
+> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications with the default coupled temperature boundary condition, the native explicit formulation should be used.
     
 
 ## Why OpenFOAM's native implementation "FickianFourier" is unstable? 
