@@ -1,5 +1,5 @@
 # FickianTransportFoam 
-**Stable** mixture-averaged and specie-specific constant Lewis transport models that are currently missing from the current OpenFOAM release. Supported OpenFoam versions are: 10.
+**Stable** mixture-averaged and specie-specific constant Lewis transport models that are currently missing from the current OpenFOAM release. Supported OpenFOAM versions are: 10.
 
 Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
 ## Theory
@@ -32,10 +32,13 @@ Calculating $\nabla\cdot\bf q$ is problematic, since the term $-\nabla\cdot \lam
 This library implements two models for evaluating the term $\nabla\cdot\bf q$ in entalphy equation:
 1. **Add the $-\nabla\cdot \lambda \nabla T$ explicitly**  
     A correction term is also included that stabilizes the equation.  
-    This approach is used in the native implementation of FickianFourier in Openfoam 
-2. **Reformulate in terms of entalphy (recommended)**
-    $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
-    The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications, the native explicit formulation should be used, when the default coupled temperature boundary condition is used.
+    This approach is used in the native implementation of FickianFourier in OpenFOAM 
+2. **Reformulate and add implicitly (recommended)**\
+   Reformulate in terms of entalphy using the relation $dh_{s,k}=c_{p,k}dT$
+   $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
+> [!NOTE]
+> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications, the native explicit formulation should be used, when the default coupled temperature boundary condition is used.
+    
 
 ## Why OpenFOAM's native implementation "FickianFourier" is unstable? 
 #### 1. Correction velocity is missing
@@ -43,7 +46,7 @@ The disparities in diffusion velocities are dumped to the inert specie to ensure
 
 #### 2. Mixture-averaged diffusion coefficients do not behave well
 The formula for mixture-averaged diffusion coefficients is undefined when $Y_k\rightarrow 1$ (leads to $\frac{0}{0}$).   
-(Side note: OpenFoam uses a wrong formulation for mixture-averaged diffusion coefficients)
+(Side note: OpenFOAM uses a wrong formulation for mixture-averaged diffusion coefficients)
 $$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk}}$$
 In FickianFourier this is "fixed" by adding $\epsilon$ to the denominator, which is defined by default as "small" ($\approx10^{-16}$)
 $$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk} + \epsilon}$$
@@ -52,9 +55,8 @@ This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and neg
 In this implementation, the issue is handled by setting $D_k = D_{kk}$, when the denominator is smaller than a threshold (DmLimit), where $D_{kk}$ is the theoretical limit.
 
 ## Usage
-Include in controlDict by libFickianTransport.so
-
-Available models:
+Include `libFickianTransport.so` in controlDict\
+Available transport models:
 
 ```
 Laminar:
@@ -69,7 +71,7 @@ constantLewisEddyDiffusivity
 ```
 
 Diffusion coefficients are given pairwise for mixture-averaged formulation, either as constants or polynomials.
-In constantLewis, Lewis numbers are included in the subdictionary as
+In constant Lewis number models, Lewis numbers are included in the subdictionary as
 ```
 Le {
   H2 1.0;
