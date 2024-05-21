@@ -102,7 +102,8 @@ laminar
     DmLimit 1e-10;
 }
 ```
-
+> [!IMPORTANT]
+> Only the sensible enthalpy formulation is supported currently and energy equation should not be solved for internal energy.
 ## References
 [1] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
 
