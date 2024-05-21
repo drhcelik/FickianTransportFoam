@@ -4,5 +4,5 @@ cd ${0%/*} || exit 1    # run from this directory
 set -e # Any subsequent(*) commands which fail will cause the shell script to exit immediately
 
 wmakeLnInclude src/ThermophysicalTransportModels
-wmake libso src/ThermophysicalTransportModels/fluidReactionThermo
 wmake libso src/ThermophysicalTransportModels/ThermophysicalTransportFunctions
+wmake libso src/ThermophysicalTransportModels/fluidReactionThermo

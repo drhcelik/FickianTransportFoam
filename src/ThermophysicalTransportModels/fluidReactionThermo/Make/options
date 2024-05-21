@@ -19,4 +19,6 @@ LIB_LIBS = \
     -lfiniteVolume \
     -lmeshTools \
     -lthermophysicalTransportModels \
-    -lfluidReactionThermophysicalTransportModels
+    -lfluidReactionThermophysicalTransportModels \
+    -L$(FOAM_USER_LIBBIN) \
+    -lThermophysicalTransportFunctions
