@@ -1,0 +1,7 @@
+**/constant/*
+**/system/*
+**/[0-9]*.[0-9]*
+
+!counterFlowFlame2D_GRI/constant/binaryDiffusionCoefficientsPolynomialDict
+!counterFlowFlame2D_GRI/constant/thermophysicalTransport
+!counterFlowFlame2D_GRI/system/decomposeParDict

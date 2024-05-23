@@ -1,3 +1,4 @@
 src/**/lnInclude
 src/**/Make/linux*
+counterFlowFlame2D_GRI_*
 *.png

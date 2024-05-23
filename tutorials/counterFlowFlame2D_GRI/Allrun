@@ -1,0 +1,67 @@
+#!/bin/bash -e
+
+cd ${0%/*} || exit 1    # run from this directory
+
+if [ -z "$WM_PROJECT_DIR" ]; then
+    echo "OpenFOAM is not loaded. Please load OpenFOAM and run this script again."
+    exit 1
+fi
+
+models="
+mixtureAveraged
+"
+
+for model in $models
+do
+    cp -r counterFlowFlame2D_GRI counterFlowFlame2D_GRI_${model}
+    cp -nr $FOAM_TUTORIALS/combustion/reactingFoam/laminar/counterFlowFlame2D_GRI/* counterFlowFlame2D_GRI_${model}/
+
+
+
+    echo -e "[$0] Running case for model: $model"
+
+    cd counterFlowFlame2D_GRI_${model}
+        foamDictionary -entry laminar/model -set "$model" \
+            constant/thermophysicalTransport > /dev/null
+
+        # Disable loadBalancing and zoltan decomposition
+        foamDictionary -entry loadBalancing -remove \
+            constant/chemistryProperties > /dev/null
+        rm constant/dynamicMeshDict constant/cellDecomposition
+
+        foamDictionary -entry "divSchemes/div(phi,h)" -set "Gauss limitedLinear 1" \
+            system/fvSchemes > /dev/null
+
+        foamDictionary -entry libs -set '("libFickianTransport.so")' system/controlDict
+
+        # Uncomment the following lines and set DLBPATH to use DLBFoam
+
+        # DLBPATH=.....................
+        # cp -r $DLBPATH/utilities/mechanisms/gri30 mech
+        # cp $DLBPATH/utilities/CMakeLists.txt mech/lib/
+        # cp $DLBPATH/utilities/runCmake.sh mech/lib/
+        # pushd mech/lib
+        # ./runCmake.sh
+        # popd
+        # # Set DLB dictionaries
+        # foamDictionary -entry loadbalancing -set {} constant/chemistryProperties
+        # foamDictionary -entry loadbalancing/active -add false constant/chemistryProperties
+        # foamDictionary -entry refmapping -set {} constant/chemistryProperties
+        # foamDictionary -entry refmapping/active -add false constant/chemistryProperties
+
+        # # Set pyJac and LAPACK
+        # foamDictionary -entry chemistryType/solver -set ode_pyJac constant/chemistryProperties
+        # foamDictionary -entry chemistryType/method -set loadBalanced_pyJac constant/chemistryProperties
+        # foamDictionary -entry odeCoeffs/solver -set seulex_LAPACK constant/chemistryProperties
+
+        # # Change links to mechanism files
+        # sed -i 's|#include .*|#include "$FOAM_CASE/mech/foam/reactions.foam"|g' constant/chemistryProperties
+        # sed -i 's|#include .*|#include "$FOAM_CASE/mech/foam/species.foam"\n#include "$FOAM_CASE/mech/foam/thermo.foam"|g' constant/physicalProperties
+
+        # # Include libraries
+        # foamDictionary -entry libs -set '("libchemistryModel_DLB.so" "libODE_DLB.so" "$FOAM_CASE/mech/lib/build/libc_pyjac.so" "libFickianTransport.so")' system/controlDict
+        
+
+        ./Allrun-parallel
+    cd ..
+done
