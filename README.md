@@ -55,8 +55,7 @@ This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and neg
 In this implementation, the issue is handled by setting $D_k = D_{kk}$, when the denominator is smaller than a threshold (DmLimit), where $D_{kk}$ is the theoretical limit.
 
 ## Usage
-Include `libFickianTransport.so` in controlDict\
-Available transport models:
+Include `libFickianTransport.so` in controlDict and select the desired model in `thermophysicalTransport`.  Available models:
 
 ```
 Laminar:
@@ -70,8 +69,7 @@ mixtureAveragedEddyDiffusivity
 constantLewisEddyDiffusivity
 ```
 
-Diffusion coefficients are given pairwise for mixture-averaged formulation, either as constants or polynomials.
-In constant Lewis number models, Lewis numbers are included in the subdictionary as
+For constant Lewis number models, Lewis numbers are included in the subdictionary as
 ```
 Le {
   H2 1.0;
@@ -79,8 +77,15 @@ Le {
   N2 1.0;
 }
 ```
+A file with Lewis numbers can be generated using [generateLewisNumbersDict.py](utilities/generateLewisNumbersDict.py) utility (use `--help` option to learn more). Note that Lewis numbers have to be selected carefully and default parameters in the script are given for simplicity only.
 
-Example for dictionary entry in thermophysicalTransport: 
+For binary diffusion coefficients, we included the implementation of log-polynomial fit, used by Cantera [3]
+```math
+ D_{jk} = \frac{1}{p} T^{3/2} \sum_{i=0}^{4} a_{jki} \log^i{T} $$
+```
+These coefficients can be obtained using [generateBinaryDiffusionCoefficientsPolynomialDict.py](utilities/generateBinaryDiffusionCoefficientsPolynomialDict.py) utility (use `--help` option to learn more).
+
+Example of the dictionary entry in thermophysicalTransport:  
 
 ```
 laminar
@@ -108,3 +113,5 @@ laminar
 [1] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
 
 [2] R. Tuominen, Coupling Serpent and OpenFOAM for neutronics - CFD multi-physics calculations. Master's thesis, Aalto university, Espoo, Helsinki, Aug. 2015
+
+[3] David G. Goodwin, Harry K. Moffat, Ingmar Schoegl, Raymond L. Speth, and Bryan W. Weber. Cantera: An object-oriented software toolkit for chemical kinetics, thermodynamics, and transport processes. https://www.cantera.org, 2023. Version 3.0.0.
