@@ -1,5 +1,5 @@
 # FickianTransportFoam 
-**Stable** mixture-averaged and specie-specific constant Lewis transport models that are currently missing from the current OpenFOAM release. Supported OpenFOAM versions are: 10.
+**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 10.
 
 Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
 ## Theory
@@ -23,36 +23,38 @@ Diffusion coefficients are evaluted based on two assumptions:
 3. **Constant Lewis number diffusion coefficients**
    $$D_k = \frac{\lambda}{c_p}\frac{1}{\mathrm{Le}}$$
 
-In LES-models, additional subgrid scale diffusion is added using eddy diffusivity concept similarly as in the OpenFOAM's native transport models. Turbulent mass diffusion coefficients are calculated from the turbulent thermal diffusivity using constant turbulent Prantl and Schmidt numbers defined in the model dictionary. 
+In LES-models, additional subgrid scale mixing is added using eddy diffusivity concept similarly as in the OpenFOAM's native transport models. Turbulent mass diffusion coefficients are calculated from the turbulent thermal diffusivity using constant turbulent Prantl and Schmidt numbers defined in the model dictionary. 
 
 ### Heat fluxes
 In the enthalpy equation, heat flux $\mathbf{q}$ is given assuming Fourier's law as
 $$\mathbf{q} = -\lambda \nabla T + \sum_{k=1}^N h_k \mathbf{j}_k   $$
-Calculating $\nabla\cdot\bf q$ is problematic, since the term $-\nabla\cdot \lambda \nabla T$ cannot added directly explicitly for stability reasons.
+Evaluating term $\nabla\cdot\bf q$ is problematic, since the term $-\nabla\cdot \lambda \nabla T$ cannot added directly explicitly for stability reasons.
 This library implements two models for evaluating the term $\nabla\cdot\bf q$ in entalphy equation:
-1. **Add the $-\nabla\cdot \lambda \nabla T$ explicitly**  
-    A correction term is also included that stabilizes the equation.  
-    This approach is used in the native implementation of FickianFourier in OpenFOAM 
-2. **Reformulate and add implicitly (recommended)**\
-   Reformulate in terms of entalphy using the relation $dh_{s,k}=c_{p,k}dT$
+1. **Reformulate and add implicitly (recommended)**\
+   Reformulate in terms of entalphy using the perfect gas assumption and relation $dh_{s,k}=c_{p,k}dT$
    $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
+2. **Add $-\nabla\cdot \lambda \nabla T$ explicitly**  
+    An additional correction term is included that stabilizes the equation.  
+    This approach is used in the native implementation of FickianFourier in OpenFOAM 
+
 > [!NOTE]
-> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which      balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications with the default coupled temperature boundary condition, the native explicit formulation should be used.
+> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications with the default coupled temperature boundary condition, the native explicit formulation should be used.
     
 
-## Why OpenFOAM's native implementation "FickianFourier" is unstable? 
+## Why OpenFOAM's native implementation "FickianFourier" can be unstable? 
 #### 1. Correction velocity is missing
 The disparities in diffusion velocities are dumped to the inert specie to ensure mass conservation. This works fine, when the mixture is diluted greatly (for example the inlet is premixed mixture of air and fuel and N2 is thus the dominant specie), but not when there is a separate fuel inlet.
 
 #### 2. Mixture-averaged diffusion coefficients do not behave well
 The formula for mixture-averaged diffusion coefficients is undefined when $Y_k\rightarrow 1$ (leads to $\frac{0}{0}$).   
-(Side note: OpenFOAM uses a wrong formulation for mixture-averaged diffusion coefficients)
 $$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk}}$$
 In FickianFourier this is "fixed" by adding $\epsilon$ to the denominator, which is defined by default as "small" ($\approx10^{-16}$)
 $$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk} + \epsilon}$$
-This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and negative when $X_k\gt1$. This is both unphysical and numerically unstable leading to divergent simulations. 
+This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and negative when $X_k\gt1$. This is both unphysical and numerically unstable leading to divergent simulations.  
+(Side note: OpenFOAM uses wrong formulation (Eq. 12.176 in [1]), which is meant for evaluating diffusion flux respect to the molar
+average velocity)
 
-In this implementation, the issue is handled by setting $D_k = D_{kk}$, when the denominator is smaller than a threshold (DmLimit), where $D_{kk}$ is the theoretical limit.
+In this implementation, this issue is handled by setting $D_k = D_{kk}$, when the mass fraction is greater than a threshold (1 - selfDiffusionLimit), where $D_{kk}$ is the theoretical limit.
 
 ## Usage
 Include `libFickianTransport.so` in controlDict and select the desired model in `thermophysicalTransport`.  Available models:
@@ -104,11 +106,11 @@ laminar
     // ....     
     }
     implicitHeatFlux true; //Default true
-    DmLimit 1e-10;
+    selfDiffusionLimit 1e-6;
 }
 ```
 > [!IMPORTANT]
-> Only the sensible enthalpy formulation is supported currently and energy equation should not be solved for internal energy.
+> Only the sensible enthalpy formulation is supported currently and the energy equation should not be solved for internal energy.
 ## References
 [1] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
 
