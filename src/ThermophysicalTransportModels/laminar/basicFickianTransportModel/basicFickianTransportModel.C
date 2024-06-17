@@ -73,7 +73,7 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
  
     DFuncs_(this->thermo().composition().species().size()),
 
-    DmLimit_(small),
+    DmLimit_(1.0 - 1e-6),
     
     Dm_(this->thermo().composition().species().size()),
     
@@ -169,7 +169,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
                     }
                 }
             }
-            DmLimit_ = this->coeffDict_.lookupOrDefault("DmLimit",small);
+            DmLimit_ = this->coeffDict_.lookupOrDefault("selfDiffusionLimit",1.0 - 1e-6);
         }
         
 	implicitFlux_ = this->coeffDict_.lookupOrDefault("implicitHeatFlux",true);
@@ -386,7 +386,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::correct()
 template<class BasicThermophysicalTransportModel>
 void basicFickianTransportModel<BasicThermophysicalTransportModel>::setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) {
   forAll(Dmi,i) {
-      if(Dmi[i] < DmLimit_){
+      if(Yi[i] > DmLimit_){
           Dmi[i] = Dii[i];
       } else {
           Dmi[i] = (1 - Yi[i])/Dmi[i]/Wm[i];
