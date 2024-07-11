@@ -90,12 +90,11 @@ mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::DEff
     const volScalarField& Yi
 ) const
 {
-    const basicSpecieMixture& composition = this->thermo().composition();
     return volScalarField::New
     (
         "DEff",
         this->momentumTransport().rho()
-       *this->Dm()[composition.index(Yi)]
+       *this->Dm()[this->thermo().specieIndex(Yi)]
       + (this->Prt_/Sct_)*this->alphat()
     );
 }
@@ -109,10 +108,10 @@ mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::DEff
     const label patchi
 ) const
 {
-    const basicSpecieMixture& composition = this->thermo().composition();
+
     return
         this->momentumTransport().rho().boundaryField()[patchi]
-       *this->Dm()[composition.index(Yi)].boundaryField()[patchi]
+       *this->Dm()[this->thermo().specieIndex(Yi)].boundaryField()[patchi]
       + this->Prt_.value()/Sct_.value()*this->alphat(patchi);
 }
 

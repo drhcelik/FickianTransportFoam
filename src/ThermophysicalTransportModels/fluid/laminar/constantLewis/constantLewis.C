@@ -74,13 +74,12 @@ tmp<volScalarField> constantLewis<laminarThermophysicalTransportModel>::DEff
     const volScalarField& Yi
 ) const
 {
-    const basicSpecieMixture& composition = this->thermo().composition();
 
     return volScalarField::New
     (
         "DEff",
         this->thermo().kappa()/this->thermo().Cp()
-       /this->Le_[composition.index(Yi)]
+       /this->Le_[this->thermo().specieIndex(Yi)]
     );
 }
 
@@ -92,12 +91,11 @@ tmp<scalarField> constantLewis<laminarThermophysicalTransportModel>::DEff
     const label patchi
 ) const
 {
-    const basicSpecieMixture& composition = this->thermo().composition();
 
     return
        this->thermo().kappa().boundaryField()[patchi]
        /this->thermo().Cp().boundaryField()[patchi]
-       /this->Le_[composition.index(Yi)];
+       /this->Le_[this->thermo().specieIndex(Yi)];
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

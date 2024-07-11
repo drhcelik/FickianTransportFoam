@@ -61,7 +61,7 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
          IOobject
          (
              thermo.phasePropertyName("Jc"),
-             this->thermo().T().mesh().time().timeName(),
+             this->thermo().T().mesh().time().name(),
              this->thermo().T().mesh(),
              IOobject::NO_READ,
              IOobject::NO_WRITE
@@ -72,11 +72,11 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
 
     implicitFlux_(true),
  
-    DFuncs_(this->thermo().composition().species().size()),
+    DFuncs_(this->thermo().species().size()),
 
     DmLimit_(1.0 - 1e-6),
     
-    Le_(this->thermo().composition().species().size())
+    Le_(this->thermo().species().size())
     
 {}
 
@@ -91,14 +91,13 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
         BasicThermophysicalTransportModel::read()
     )
     {
-        const basicSpecieMixture& composition = this->thermo().composition();
-        const speciesTable& species = composition.species();
+        const speciesTable& species = this->thermo().species();
 
 	if(constantLewis_) {
 	   Info << "Setting Lewis numbers " << endl;
 	   dictionary LewisNumberDict(this->coeffDict_.subDict("Le"));
 
-           const PtrList<volScalarField>& Y = composition.Y();
+           const PtrList<volScalarField>& Y = this->thermo().Y();
            for (label i=0; i<species.size(); i++)
            {
               if (LewisNumberDict.found(Y[i].member()))
@@ -163,7 +162,11 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
                         DFuncs_[i].set
                         (
                             j,
-                            Function2<scalar>::New(Dname, Ddict).ptr()
+                            Function2<scalar>::New(Dname,                                
+                                 dimPressure,
+                                 dimTemperature,
+                                 dimKinematicViscosity,
+                                 Ddict).ptr()
                         );
                     }
                 }
@@ -201,9 +204,10 @@ tmp<surfaceScalarField> basicFickianTransportModel<BasicThermophysicalTransportM
         )
     );
 
-    const basicSpecieMixture& composition = this->thermo().composition();
-    const PtrList<volScalarField>& Y = composition.Y();
-
+    const PtrList<volScalarField>& Y = this->thermo().Y();
+    const volScalarField& p = this->thermo().p();
+    const volScalarField& T = this->thermo().T();
+    
     if (Y.size())
     {
         surfaceScalarField sumJh
@@ -219,10 +223,7 @@ tmp<surfaceScalarField> basicFickianTransportModel<BasicThermophysicalTransportM
         forAll(Y, i)
         {
 
-                const volScalarField hi
-                (
-                    composition.Hs(i, this->thermo().p(), this->thermo().T())
-                );
+                const volScalarField hi(this->thermo().hsi(i, p, T));
 
                 const surfaceScalarField ji(this->j(Y[i]));
                 sumJh += ji*fvc::interpolate(hi);
@@ -256,8 +257,9 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
          )
      );
      
-     const basicSpecieMixture& composition = this->thermo().composition();
-     const PtrList<volScalarField>& Y = composition.Y();
+     const PtrList<volScalarField>& Y = this->thermo().Y();
+     const volScalarField& p = this->thermo().p();
+     const volScalarField& T = this->thermo().T();
 
      if (!implicitFlux_) 
      {
@@ -279,10 +281,7 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
      forAll(Y, i)
      {
 
-             const volScalarField hi
-             (
-                 composition.Hs(i, this->thermo().p(), this->thermo().T())
-             );
+             const volScalarField hi(this->thermo().hsi(i, p, T));
  
              const surfaceScalarField ji(this->j(Y[i]));
  
@@ -326,8 +325,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
 {
     if (constantLewis_) return correctJc();
     
-    const basicSpecieMixture& composition = this->thermo().composition();
-    const PtrList<volScalarField>& Y = composition.Y();
+    const PtrList<volScalarField>& Y = this->thermo().Y();
     const volScalarField& p = this->thermo().p();
     const volScalarField& T = this->thermo().T();
     const volScalarField Wm(this->thermo().W());
@@ -341,7 +339,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
 	     (
 		 "Dm_" + Y[i].name(),
 		 T.mesh(),
-		 dimensionedScalar(dimViscosity,scalar(0))
+		 dimensionedScalar(dimKinematicViscosity,scalar(0))
 	     ));
      }
      volScalarField Dji
@@ -350,7 +348,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
 	     (
 		 "Dji",
 		 T.mesh(),
-		 dimless/dimViscosity
+		 dimless/dimKinematicViscosity
 	     )
 	  );  
 
@@ -358,9 +356,9 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
      {    
        for(label j = 0; j < i; j++)
        {
-	   Dji = evaluate(DFuncs_[j][i], dimless/dimViscosity, p, T);
-	   Dm_[i] += Y[j]/Dji*(1/composition.Wi(j) + (1/composition.Wi(i) - 1/composition.Wi(j))*Y[i]);
-	   Dm_[j] += Y[i]/Dji*(1/composition.Wi(i) + (1/composition.Wi(j) - 1/composition.Wi(i))*Y[j]);
+	   Dji = evaluate(DFuncs_[j][i], dimless/dimKinematicViscosity, p, T);
+	   Dm_[i] += Y[j]/Dji*(1/this->thermo().Wi(j).value() + (1/this->thermo().Wi(i).value() - 1/this->thermo().Wi(j).value())*Y[i]);
+	   Dm_[j] += Y[i]/Dji*(1/this->thermo().Wi(i).value() + (1/this->thermo().Wi(j).value() - 1/this->thermo().Wi(i).value())*Y[j]);
        }
      }         
 
@@ -368,12 +366,12 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
      { 
 
 	  volScalarField & Dmi = Dm_[i];
-	  Dji.dimensions().reset(dimViscosity);
-	  Dji = evaluate(DFuncs_[i][i], dimViscosity, p, T);
-	  setDm(composition.Wi(i),Dji.ref(),Dmi.ref(),Y[i](),Wm());
+	  Dji.dimensions().reset(dimKinematicViscosity);
+	  Dji = evaluate(DFuncs_[i][i], dimKinematicViscosity, p, T);
+	  setDm(this->thermo().Wi(i).value(),Dji,Dmi,Y[i](),Wm());
 	  forAll(Dmi.boundaryFieldRef(), patchi)
 	  { 
-	     setDm(composition.Wi(i),Dji.boundaryFieldRef()[patchi],Dmi.boundaryFieldRef()[patchi],Y[i].boundaryField()[patchi],Wm.boundaryField()[patchi]);
+	     setDm(this->thermo().Wi(i).value(),Dji.boundaryFieldRef()[patchi],Dmi.boundaryFieldRef()[patchi],Y[i].boundaryField()[patchi],Wm.boundaryField()[patchi]);
 	  }
       }     
        
@@ -443,8 +441,7 @@ template<class BasicThermophysicalTransportModel>
 void basicFickianTransportModel<BasicThermophysicalTransportModel>::correctJc() const
 {
    
-   const basicSpecieMixture& composition = this->thermo().composition();
-   const PtrList<volScalarField>& Y = composition.Y();
+   const PtrList<volScalarField>& Y = this->thermo().Y();
    Jc_ *= scalar(0);
    forAll(Y, i)
    {

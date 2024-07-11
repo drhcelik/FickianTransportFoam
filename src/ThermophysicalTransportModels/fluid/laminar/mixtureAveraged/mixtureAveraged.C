@@ -74,12 +74,11 @@ tmp<volScalarField> mixtureAveraged<laminarThermophysicalTransportModel>::DEff
     const volScalarField& Yi
 ) const
 {
-    const basicSpecieMixture& composition = this->thermo().composition();
     return volScalarField::New
     (
         "DEff",
         this->momentumTransport().rho()
-       *this->Dm()[composition.index(Yi)]
+       *this->Dm()[this->thermo().specieIndex(Yi)]
     );
 }
 
@@ -91,11 +90,10 @@ tmp<scalarField> mixtureAveraged<laminarThermophysicalTransportModel>::DEff
     const label patchi
 ) const
 {  
-    const basicSpecieMixture& composition = this->thermo().composition();
 
     return
         this->momentumTransport().rho().boundaryField()[patchi]
-       *this->Dm()[composition.index(Yi)].boundaryField()[patchi];
+       *this->Dm()[this->thermo().specieIndex(Yi)].boundaryField()[patchi];
 }
 
 
