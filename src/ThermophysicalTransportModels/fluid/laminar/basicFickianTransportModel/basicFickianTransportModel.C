@@ -29,6 +29,7 @@ License
 #include "fvcLaplacian.H"
 #include "fvcSnGrad.H"
 #include "fvmSup.H"
+#include "fvmDiv.H"
 #include "surfaceInterpolate.H"
 #include "Function2Evaluate.H"
 
@@ -63,7 +64,7 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
              this->thermo().T().mesh().time().timeName(),
              this->thermo().T().mesh(),
              IOobject::NO_READ,
-             IOobject::AUTO_WRITE
+             IOobject::NO_WRITE
          ),
          this->thermo().T().mesh(),
          dimensionedScalar(dimMass/dimArea/dimTime, 0)
@@ -74,8 +75,6 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
     DFuncs_(this->thermo().composition().species().size()),
 
     DmLimit_(1.0 - 1e-6),
-    
-    Dm_(this->thermo().composition().species().size()),
     
     Le_(this->thermo().composition().species().size())
     
@@ -323,77 +322,123 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
 
 
 template<class BasicThermophysicalTransportModel>
-void basicFickianTransportModel<BasicThermophysicalTransportModel>::correct()
+void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() const
 {
-    BasicThermophysicalTransportModel::correct();
     if (constantLewis_) return correctJc();
-
+    
     const basicSpecieMixture& composition = this->thermo().composition();
     const PtrList<volScalarField>& Y = composition.Y();
     const volScalarField& p = this->thermo().p();
     const volScalarField& T = this->thermo().T();
- 
-        const volScalarField Wm(this->thermo().W());
-        forAll(Dm_, i)
-        {
-            Dm_.set
-                 (
-                     i,
-                     volScalarField::New
-                     (
-                         "Dm_" + Y[i].name(),
-                         T.mesh(),
-                         dimensionedScalar(dimViscosity,scalar(0))
-                     ));
-        }
-        
-        volScalarField Dji
-         (
-             volScalarField::New
-             (
-                 "Dji",
-                 T.mesh(),
-                 dimless/dimViscosity
-             )
-          );  
+    const volScalarField Wm(this->thermo().W());
+    Dm_.setSize(Y.size());
+    forAll(Dm_, i)
+    {
+     Dm_.set
+	 (
+	     i,
+	     volScalarField::New
+	     (
+		 "Dm_" + Y[i].name(),
+		 T.mesh(),
+		 dimensionedScalar(dimViscosity,scalar(0))
+	     ));
+     }
+     volScalarField Dji
+	 (
+	     volScalarField::New
+	     (
+		 "Dji",
+		 T.mesh(),
+		 dimless/dimViscosity
+	     )
+	  );  
 
-	    forAll(Y, i)
-	    {    
-	       for(label j = 0; j < i; j++)
-	       {
-		   Dji = evaluate(DFuncs_[j][i], dimless/dimViscosity, p, T);
-		   Dm_[i] += Y[j]/Dji*(1/composition.Wi(j) + (1/composition.Wi(i) - 1/composition.Wi(j))*Y[i]);
-		   Dm_[j] += Y[i]/Dji*(1/composition.Wi(i) + (1/composition.Wi(j) - 1/composition.Wi(i))*Y[j]);
-	       }
-	    }         
-        
-        forAll(Dm_, i)
-        { 
-        
-          volScalarField & Dmi = Dm_[i];
-          Dji.dimensions().reset(dimViscosity);
-          Dji = evaluate(DFuncs_[i][i], dimViscosity, p, T);
-          setDm(composition.Wi(i),Dji.ref(),Dmi.ref(),Y[i](),Wm());
-          forAll(Dmi.boundaryFieldRef(), patchi)
-          { 
-             setDm(composition.Wi(i),Dji.boundaryFieldRef()[patchi],Dmi.boundaryFieldRef()[patchi],Y[i].boundaryField()[patchi],Wm.boundaryField()[patchi]);
-          }
-        }     
+     forAll(Y, i)
+     {    
+       for(label j = 0; j < i; j++)
+       {
+	   Dji = evaluate(DFuncs_[j][i], dimless/dimViscosity, p, T);
+	   Dm_[i] += Y[j]/Dji*(1/composition.Wi(j) + (1/composition.Wi(i) - 1/composition.Wi(j))*Y[i]);
+	   Dm_[j] += Y[i]/Dji*(1/composition.Wi(i) + (1/composition.Wi(j) - 1/composition.Wi(i))*Y[j]);
+       }
+     }         
+
+     forAll(Dm_, i)
+     { 
+
+	  volScalarField & Dmi = Dm_[i];
+	  Dji.dimensions().reset(dimViscosity);
+	  Dji = evaluate(DFuncs_[i][i], dimViscosity, p, T);
+	  setDm(composition.Wi(i),Dji.ref(),Dmi.ref(),Y[i](),Wm());
+	  forAll(Dmi.boundaryFieldRef(), patchi)
+	  { 
+	     setDm(composition.Wi(i),Dji.boundaryFieldRef()[patchi],Dmi.boundaryFieldRef()[patchi],Y[i].boundaryField()[patchi],Wm.boundaryField()[patchi]);
+	  }
+      }     
        
-   correctJc();
+      correctJc();
 }
 
+ template<class BasicThermophysicalTransportModel>
+ void basicFickianTransportModel<BasicThermophysicalTransportModel>::predict()
+ {
+     BasicThermophysicalTransportModel::predict();
+     updateDm();
+ }
+  
+  
+ template<class BasicThermophysicalTransportModel>
+ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::movePoints()
+ {
+     return true;
+ }
+  
+  
+ template<class BasicThermophysicalTransportModel>
+ void basicFickianTransportModel<BasicThermophysicalTransportModel>::topoChange
+ (
+     const polyTopoChangeMap& map
+ )
+ {
+     // Delete the cached Dm, will be re-created in predict
+     Dm_.clear();
+ }
+  
+  
 template<class BasicThermophysicalTransportModel>
-void basicFickianTransportModel<BasicThermophysicalTransportModel>::setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) {
-  forAll(Dmi,i) {
-      if(Yi[i] > DmLimit_){
-          Dmi[i] = Dii[i];
-      } else {
-          Dmi[i] = (1 - Yi[i])/Dmi[i]/Wm[i];
-      } 
-  }
-}
+void basicFickianTransportModel<BasicThermophysicalTransportModel>::mapMesh
+ (
+     const polyMeshMap& map
+ )
+ {
+     // Delete the cached Dm, will be re-created in predict
+     Dm_.clear();
+ }
+  
+  
+template<class BasicThermophysicalTransportModel>
+void basicFickianTransportModel<BasicThermophysicalTransportModel>::distribute
+ (
+     const polyDistributionMap& map
+ )
+ {
+     // Delete the cached Dm, will be re-created in predict
+     Dm_.clear();
+ }
 
+ template<class BasicThermophysicalTransportModel>
+ const PtrList<volScalarField>&
+ basicFickianTransportModel<BasicThermophysicalTransportModel>::Dm() const
+ {
+     if (!Dm_.size())
+     {
+         updateDm();
+     }
+  
+     return Dm_;
+ }
+   
 template<class BasicThermophysicalTransportModel>
 void basicFickianTransportModel<BasicThermophysicalTransportModel>::correctJc() const
 {
@@ -406,6 +451,17 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::correctJc() 
      Jc_ += this->j(Y[i]); 
    }  
 
+}
+
+template<class BasicThermophysicalTransportModel>
+void basicFickianTransportModel<BasicThermophysicalTransportModel>::setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) const {
+  forAll(Dmi,i) {
+      if(Yi[i] > DmLimit_){
+          Dmi[i] = Dii[i];
+      } else {
+          Dmi[i] = (1 - Yi[i])/Dmi[i]/Wm[i];
+      } 
+  }
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //

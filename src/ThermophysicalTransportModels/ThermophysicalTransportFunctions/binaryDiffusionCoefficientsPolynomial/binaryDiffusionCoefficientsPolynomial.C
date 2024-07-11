@@ -34,7 +34,7 @@ namespace Foam
 {
 namespace Function2s
 {
-    makeScalarFunction2(binaryDiffusionCoefficientsPolynomial)
+    makeScalarFunction2(binaryDiffusionCoefficientsPolynomial);
 }
 }
 

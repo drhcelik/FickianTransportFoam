@@ -5,4 +5,4 @@ set -e # Any subsequent(*) commands which fail will cause the shell script to ex
 
 wmakeLnInclude src/ThermophysicalTransportModels
 wmake libso src/ThermophysicalTransportModels/ThermophysicalTransportFunctions
-wmake libso src/ThermophysicalTransportModels/fluidReactionThermo
+wmake libso src/ThermophysicalTransportModels/fluidMulticomponentThermophysicalTransportModels

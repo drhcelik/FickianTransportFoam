@@ -14,7 +14,7 @@ mixtureAveraged
 for model in $models
 do
     cp -r counterFlowFlame2D_GRI counterFlowFlame2D_GRI_${model}
-    cp -nr $FOAM_TUTORIALS/combustion/reactingFoam/laminar/counterFlowFlame2D_GRI/* counterFlowFlame2D_GRI_${model}/
+    cp -nr $FOAM_TUTORIALS/multicomponentFluid/counterFlowFlame2D_GRI/* counterFlowFlame2D_GRI_${model}/
 
 
 
@@ -27,7 +27,7 @@ do
         # Disable loadBalancing and zoltan decomposition
         foamDictionary -entry loadBalancing -remove \
             constant/chemistryProperties > /dev/null
-        rm constant/dynamicMeshDict constant/cellDecomposition
+        rm constant/dynamicMeshDict
 
         foamDictionary -entry "divSchemes/div(phi,h)" -set "Gauss limitedLinear 1" \
             system/fvSchemes > /dev/null
@@ -62,6 +62,14 @@ do
         # foamDictionary -entry libs -set '("libchemistryModel_DLB.so" "libODE_DLB.so" "$FOAM_CASE/mech/lib/build/libc_pyjac.so" "libFickianTransport.so")' system/controlDict
         
 
-        ./Allrun-parallel
+	# Source tutorial run functions
+	. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+	runApplication blockMesh
+
+	runApplication decomposePar
+	runParallel $(getApplication)
+	runApplication reconstructPar
+
     cd ..
 done

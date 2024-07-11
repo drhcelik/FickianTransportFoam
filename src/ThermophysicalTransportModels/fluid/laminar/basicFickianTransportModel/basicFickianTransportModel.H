@@ -65,13 +65,20 @@ class basicFickianTransportModel
             
             scalar DmLimit_;
             
-            void setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm);
+            void setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) const;
             	    
  	    void correctJc() const;
-protected:
+ 	    
+            //- Update Dm_
+            void updateDm() const;
+  
             //- Mass diffusion coefficients in the mixture
-            PtrList<volScalarField> Dm_; 
+            mutable PtrList<volScalarField> Dm_; 
             
+protected:
+
+            //- Update Dm_ if not yet constructed and return
+            const PtrList<volScalarField>& Dm() const;            
             scalarList Le_;	    
  	    
 public:
@@ -119,8 +126,22 @@ public:
         //- Return the source term for the given specie mass-fraction equation
         virtual tmp<fvScalarMatrix> divj(volScalarField& Yi) const;
 
-        //- Update the diffusion coefficients
-        virtual void correct();
+         //- Update the diffusion coefficients
+         virtual void predict();
+         
+           // Mesh changes
+  
+             //- Update for mesh motion
+             virtual bool movePoints();
+  
+             //- Update topology using the given map
+             virtual void topoChange(const polyTopoChangeMap& map);
+  
+             //- Update from another mesh using the given map
+             virtual void mapMesh(const polyMeshMap& map);
+  
+             //- Redistribute or update using the given distribution map
+             virtual void distribute(const polyDistributionMap& map);
 };
 
 

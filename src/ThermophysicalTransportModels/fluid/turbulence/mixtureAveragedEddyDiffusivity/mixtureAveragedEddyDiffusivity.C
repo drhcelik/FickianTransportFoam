@@ -24,84 +24,102 @@ License
     along with OpenFOAM.  If not, see <http://www.gnu.org/licenses/>.
 \*---------------------------------------------------------------------------*/
 
-#include "constantLewis.H"
+#include "mixtureAveragedEddyDiffusivity.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
 {
-namespace laminarThermophysicalTransportModels
+namespace turbulenceThermophysicalTransportModels
 {
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class laminarThermophysicalTransportModel>
-constantLewis<laminarThermophysicalTransportModel>::
-constantLewis
+template<class TurbulenceThermophysicalTransportModel>
+mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::
+mixtureAveragedEddyDiffusivity
 (
     const momentumTransportModel& momentumTransport,
     const thermoModel& thermo
 )
 :
-    basicFickianTransportModel<unityLewisFourier<laminarThermophysicalTransportModel>>
+    basicFickianTransportModel<unityLewisEddyDiffusivity<TurbulenceThermophysicalTransportModel>>
     (
         typeName,
         momentumTransport,
         thermo,
-        true
-    )
+        false
+    ),
+
+    Sct_("Sct", dimless, this->coeffDict_)
 {
     read();
-    this->correct();
+    this->printCoeffs(typeName);
 }
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-template<class laminarThermophysicalTransportModel>
+template<class TurbulenceThermophysicalTransportModel>
 bool
-constantLewis<laminarThermophysicalTransportModel>::read()
+mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::read()
 {
-    return basicFickianTransportModel
-    <
-        unityLewisFourier<laminarThermophysicalTransportModel>
-    >::read();
+    if
+    (
+        basicFickianTransportModel
+        <
+            unityLewisEddyDiffusivity<TurbulenceThermophysicalTransportModel>
+        >::read()
+    )
+    {
+        Sct_.read(this->coeffDict());
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-template<class laminarThermophysicalTransportModel>
-tmp<volScalarField> constantLewis<laminarThermophysicalTransportModel>::DEff
+
+template<class TurbulenceThermophysicalTransportModel>
+tmp<volScalarField>
+mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::DEff
 (
     const volScalarField& Yi
 ) const
 {
     const basicSpecieMixture& composition = this->thermo().composition();
-
     return volScalarField::New
     (
         "DEff",
-        this->alphaEff()
-       /this->Le_[composition.index(Yi)]
+        this->momentumTransport().rho()
+       *this->Dm()[composition.index(Yi)]
+      + (this->Prt_/Sct_)*this->alphat()
     );
 }
 
 
-template<class laminarThermophysicalTransportModel>
-tmp<scalarField> constantLewis<laminarThermophysicalTransportModel>::DEff
+template<class TurbulenceThermophysicalTransportModel>
+tmp<scalarField>
+mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::DEff
 (
     const volScalarField& Yi,
     const label patchi
 ) const
 {
     const basicSpecieMixture& composition = this->thermo().composition();
-
     return
-        this->alphaEff(patchi)
-       /this->Le_[composition.index(Yi)];
+        this->momentumTransport().rho().boundaryField()[patchi]
+       *this->Dm()[composition.index(Yi)].boundaryField()[patchi]
+      + this->Prt_.value()/Sct_.value()*this->alphat(patchi);
 }
+
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-} // End namespace laminarThermophysicalTransportModels
+} // End namespace turbulenceThermophysicalTransportModels
 } // End namespace Foam
 
 // ************************************************************************* //
