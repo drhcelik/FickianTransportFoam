@@ -1,5 +1,5 @@
 # FickianTransportFoam 
-**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 10.
+**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 12, 11 and 10.
 
 Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
 ## Theory
