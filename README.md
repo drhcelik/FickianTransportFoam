@@ -18,20 +18,22 @@ To ensure mass conservation, a correction velocity is introduced to the diffusio
 
 Diffusion coefficients are evaluted based on two assumptions:
 1. **Mixture-averaged diffusion coefficients**  
-   Diffusion coefficients are given by Eq. 12.178 in [1]
-   $$D_k = \left(\sum_{j\neq k} \frac{X_j}{D_{jk}} + \frac{X_k}{1-Y_k}\sum_{j\neq k} \frac{Y_j}{D_{jk}}\right)^{-1}$$
-3. **Constant Lewis number diffusion coefficients**
+   Diffusion coefficients are given by Eq. 12.178 in [1]  
+   $$D_k = \left(\sum_{j\neq k} \frac{X_j}{D_{jk}} + \frac{X_k}{1-Y_k}\sum_{j\neq k} \frac{Y_j}{D_{jk}}\right)^{-1}$$  
+3. **Constant Lewis number diffusion coefficients**  
    $$D_k = \frac{\lambda}{c_p}\frac{1}{\mathrm{Le}}$$
 
 In LES-models, additional subgrid scale mixing is added using eddy diffusivity concept similarly as in the OpenFOAM's native transport models. Turbulent mass diffusion coefficients are calculated from the turbulent thermal diffusivity using constant turbulent Prantl and Schmidt numbers defined in the model dictionary. 
 
 ### Heat fluxes
 In the enthalpy equation, heat flux $\mathbf{q}$ is given assuming Fourier's law as
-$$\mathbf{q} = -\lambda \nabla T + \sum_{k=1}^N h_k \mathbf{j}_k   $$
+```math
+\mathbf{q} = -\lambda \nabla T + \sum_{k=1}^N h_k \mathbf{j}_k
+```
 Evaluating term $\nabla\cdot\bf q$ is problematic, since the term $-\nabla\cdot \lambda \nabla T$ cannot added directly explicitly for stability reasons.
 This library implements two models for evaluating the term $\nabla\cdot\bf q$ in entalphy equation:
-1. **Reformulate and add implicitly (recommended)**\
-   Reformulate in terms of entalphy using the perfect gas assumption and relation $dh_{s,k}=c_{p,k}dT$
+1. **Reformulate and add implicitly (recommended)**  
+   Reformulate in terms of entalphy using the perfect gas assumption and relation $dh_{s,k}=c_{p,k}dT$  
    $$-\lambda \nabla T = -\frac{\lambda}{c_p} \nabla h_s  + \frac{\lambda}{c_p}\sum_{k=1}^N h_k \nabla Y_k$$
 2. **Add $-\nabla\cdot \lambda \nabla T$ explicitly**  
     An additional correction term is included that stabilizes the equation.  
@@ -47,9 +49,13 @@ The disparities in diffusion velocities are dumped to the inert specie to ensure
 
 #### 2. Mixture-averaged diffusion coefficients do not behave well
 The formula for mixture-averaged diffusion coefficients is undefined when $Y_k\rightarrow 1$ (leads to $\frac{0}{0}$).   
-$$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk}}$$
+```math
+D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk}}
+```
 In FickianFourier this is "fixed" by adding $\epsilon$ to the denominator, which is defined by default as "small" ($\approx10^{-16}$)
-$$D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk} + \epsilon}$$
+```math
+D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk} + \epsilon}
+```
 This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and negative when $X_k\gt1$. This is both unphysical and numerically unstable leading to divergent simulations.  
 (Side note: OpenFOAM uses wrong formulation (Eq. 12.176 in [1]), which is meant for evaluating diffusion flux respect to the molar
 average velocity)
