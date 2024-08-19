@@ -6,13 +6,12 @@ Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
 ### Mass diffusion fluxes
 FickianTransportFoam implements a transport model based on Fick's law using the formulation, where diffusion fluxes are evaluated with respect to the mass fraction gradient as
 ```math
-\tag{1}
-\mathbf{j}_k = -\rho D_k \nabla Y_k,
+\mathbf{j}_k = -\rho D_k \nabla Y_k
 ```
 where $D_k$ is a model specific diffusion coefficient.   
 To ensure mass conservation, a correction velocity is introduced to the diffusion fluxes [1] as
 ```math
- \mathbf{j}_k = -\rho D_k \nabla Y_k + \rho Y_k \sum_{j=1}^{N} D_j \nabla Y_j $$
+ \mathbf{j}_k = -\rho D_k \nabla Y_k + \rho Y_k \sum_{j=1}^{N} D_j \nabla Y_j 
 ```
 
 
@@ -89,7 +88,7 @@ A file with Lewis numbers can be generated using [generateLewisNumbersDict.py](u
 
 For binary diffusion coefficients, we included the implementation of log-polynomial fit, used by Cantera [3]
 ```math
- D_{jk} = \frac{1}{p} T^{3/2} \sum_{i=0}^{4} a_{jki} \log^i{T} $$
+ D_{jk} = \frac{1}{p} T^{3/2} \sum_{i=0}^{4} a_{jki} \log^i{T}
 ```
 These coefficients can be obtained using [generateBinaryDiffusionCoefficientsPolynomialDict.py](utilities/generateBinaryDiffusionCoefficientsPolynomialDict.py) utility (use `--help` option to learn more).
 
