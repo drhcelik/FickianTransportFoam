@@ -78,7 +78,13 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
     
     Le_(this->thermo().species().size())
     
-{}
+{
+    if(this->thermo().he().name() == "e") {
+        FatalErrorInFunction
+            << "Internal energy is not supported as a solution variable. Please use enthalpy instead."
+            << exit(FatalError);
+    }
+}
 
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
@@ -225,7 +231,7 @@ tmp<surfaceScalarField> basicFickianTransportModel<BasicThermophysicalTransportM
 
                 const volScalarField hi(this->thermo().hsi(i, p, T));
 
-                const surfaceScalarField ji(this->j(Y[i]));
+                const surfaceScalarField ji(BasicThermophysicalTransportModel::j(Y[i]));
                 sumJh += ji*fvc::interpolate(hi);
             
         }
@@ -234,7 +240,7 @@ tmp<surfaceScalarField> basicFickianTransportModel<BasicThermophysicalTransportM
 
         tmpq.ref() += sumJh;
     }
-
+    tmpq.ref() -= Jc_*fvc::interpolate(this->thermo().he());
     return tmpq;
 }
 
@@ -283,7 +289,7 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
 
              const volScalarField hi(this->thermo().hsi(i, p, T));
  
-             const surfaceScalarField ji(this->j(Y[i]));
+             const surfaceScalarField ji(BasicThermophysicalTransportModel::j(Y[i]));
  
              sumJh += ji*fvc::interpolate(hi);
              if (implicitFlux_) {
@@ -305,7 +311,7 @@ tmp<surfaceScalarField> basicFickianTransportModel<BasicThermophysicalTransportM
     const volScalarField& Yi
 ) const
 {
-       return BasicThermophysicalTransportModel::j(Yi); 
+       return BasicThermophysicalTransportModel::j(Yi) - Jc_*fvc::interpolate(Yi); 
 }
 
 
@@ -445,7 +451,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::correctJc() 
    Jc_ *= scalar(0);
    forAll(Y, i)
    {
-     Jc_ += this->j(Y[i]); 
+     Jc_ -= fvc::interpolate(this->alpha()*this->DEff(Y[i]))*fvc::snGrad(Y[i]);
    }  
 
 }
