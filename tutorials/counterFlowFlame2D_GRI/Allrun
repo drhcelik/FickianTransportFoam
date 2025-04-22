@@ -29,9 +29,6 @@ do
             constant/chemistryProperties > /dev/null
         rm constant/dynamicMeshDict
 
-        foamDictionary -entry "divSchemes/div(phi,h)" -set "Gauss limitedLinear 1" \
-            system/fvSchemes > /dev/null
-
         foamDictionary -entry libs -set '("libFickianTransport.so")' system/controlDict
 
         # Uncomment the following lines and set DLBPATH to use DLBFoam

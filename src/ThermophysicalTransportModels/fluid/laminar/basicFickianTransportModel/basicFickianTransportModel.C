@@ -301,7 +301,7 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
  
  
      tmpDivq.ref() += fvc::div(sumJh*he.mesh().magSf());
-     tmpDivq.ref() -= fvm::div(Jc_*he.mesh().magSf(),he,"div(phi,h)");
+     tmpDivq.ref() -= fvm::div(Jc_*he.mesh().magSf(),he,"div(phic,Yi_h)");
      return tmpDivq;
  }
 
@@ -322,7 +322,7 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
 ) const
 {
     const volScalarField& T = this->thermo().T();
-    return BasicThermophysicalTransportModel::divj(Yi) - fvm::div(Jc_*T.mesh().magSf(),Yi,"div(phi,Yi_h)");  
+    return BasicThermophysicalTransportModel::divj(Yi) - fvm::div(Jc_*T.mesh().magSf(),Yi,"div(phic,Yi_h)");  
 }
 
 
