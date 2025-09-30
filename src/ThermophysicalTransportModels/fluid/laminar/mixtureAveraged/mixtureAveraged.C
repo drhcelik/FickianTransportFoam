@@ -52,7 +52,6 @@ mixtureAveraged
     )
 {
     read();
-    this->printCoeffs(typeName);
 }
 
 

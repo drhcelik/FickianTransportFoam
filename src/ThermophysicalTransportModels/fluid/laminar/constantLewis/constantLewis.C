@@ -52,7 +52,6 @@ constantLewis
     )
 {
     read();
-    this->printCoeffs(typeName);
 }
 
 

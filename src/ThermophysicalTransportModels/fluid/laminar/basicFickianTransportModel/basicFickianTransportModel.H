@@ -62,10 +62,6 @@ class basicFickianTransportModel
             //- Array of specie binary mass diffusion coefficient functions
             //  [m^2/s]
             List<PtrList<Function2<scalar>>> DFuncs_;
-            
-            scalar DmLimit_;
-            
-            void setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) const;
             	    
  	    void correctJc() const;
  	    

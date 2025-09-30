@@ -51,10 +51,9 @@ constantLewisEddyDiffusivity
         true
     ),
 
-    Sct_("Sct", dimless, this->coeffDict_)
+    Sct_("Sct", dimless, this->coeffDict())
 {
     read();
-    this->printCoeffs(typeName);
 }
 
 

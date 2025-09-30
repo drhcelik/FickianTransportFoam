@@ -73,8 +73,6 @@ basicFickianTransportModel<BasicThermophysicalTransportModel>::basicFickianTrans
     implicitFlux_(true),
  
     DFuncs_(this->thermo().species().size()),
-
-    DmLimit_(1.0 - 1e-6),
     
     Le_(this->thermo().species().size())
     
@@ -101,7 +99,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
 
 	if(constantLewis_) {
 	   Info << "Setting Lewis numbers " << endl;
-	   dictionary LewisNumberDict(this->coeffDict_.subDict("Le"));
+	   dictionary LewisNumberDict(this->coeffDict().subDict("Le"));
 
            const PtrList<volScalarField>& Y = this->thermo().Y();
            for (label i=0; i<species.size(); i++)
@@ -119,7 +117,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
 	}
 	else 
 	{
-            const dictionary& Ddict = this->coeffDict_.subDict("D");
+            const dictionary& Ddict = this->coeffDict().subDict("D");
 
             // Read the array of specie binary mass diffusion coefficient
             // functions
@@ -177,10 +175,9 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
                     }
                 }
             }
-            DmLimit_ = this->coeffDict_.lookupOrDefault("selfDiffusionLimit",1.0 - 1e-6);
         }
         
-	implicitFlux_ = this->coeffDict_.lookupOrDefault("implicitHeatFlux",true);
+	implicitFlux_ = this->coeffDict().lookupOrDefault("implicitHeatFlux",true);
 	Info << "Selecting "<< (implicitFlux_ ? "implicit" : "explicit") << " formulation for the heat flux" << endl;
 	
         return true;
@@ -335,53 +332,49 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
     const volScalarField& p = this->thermo().p();
     const volScalarField& T = this->thermo().T();
     const volScalarField Wm(this->thermo().W());
-    Dm_.setSize(Y.size());
+    Dm_.setSize(Y.size()); 
+    volScalarField Dji
+    (
+        volScalarField::New
+        (
+            "Dji",
+            T.mesh(),
+            dimKinematicViscosity
+        )
+    );
+
+    forAll(Y, i)
+    {
+        // Calculate first the denominators of the mixture-averaged
+        // diffusion coefficients
+        Dm_.set
+        (
+            i,
+            volScalarField::New
+            (
+                "Dm_" + Y[i].name(),
+                T.mesh(),
+                dimensionedScalar(dimMoles/dimMass/dimKinematicViscosity, 0)
+            )
+        );
+        for(label j = 0; j < i; j++)
+        {
+
+            Dji = evaluate(DFuncs_[j][i], dimKinematicViscosity, p, T);
+            dimensionedScalar Wi = this->thermo().Wi(i);
+            dimensionedScalar Wj = this->thermo().Wi(j);
+            Dm_[i] += Y[j]/Dji*(1/Wj + (1/Wi - 1/Wj)*Y[i]);
+            Dm_[j] += Y[i]/Dji*(1/Wi + (1/Wj - 1/Wi)*Y[j]);
+        }
+    }
+
     forAll(Dm_, i)
     {
-     Dm_.set
-	 (
-	     i,
-	     volScalarField::New
-	     (
-		 "Dm_" + Y[i].name(),
-		 T.mesh(),
-		 dimensionedScalar(dimKinematicViscosity,scalar(0))
-	     ));
-     }
-     volScalarField Dji
-	 (
-	     volScalarField::New
-	     (
-		 "Dji",
-		 T.mesh(),
-		 dimless/dimKinematicViscosity
-	     )
-	  );  
-
-     forAll(Y, i)
-     {    
-       for(label j = 0; j < i; j++)
-       {
-	   Dji = evaluate(DFuncs_[j][i], dimless/dimKinematicViscosity, p, T);
-	   Dm_[i] += Y[j]/Dji*(1/this->thermo().Wi(j).value() + (1/this->thermo().Wi(i).value() - 1/this->thermo().Wi(j).value())*Y[i]);
-	   Dm_[j] += Y[i]/Dji*(1/this->thermo().Wi(i).value() + (1/this->thermo().Wi(j).value() - 1/this->thermo().Wi(i).value())*Y[j]);
-       }
-     }         
-
-     forAll(Dm_, i)
-     { 
-
-	  volScalarField & Dmi = Dm_[i];
-	  Dji.dimensions().reset(dimKinematicViscosity);
-	  Dji = evaluate(DFuncs_[i][i], dimKinematicViscosity, p, T);
-	  setDm(this->thermo().Wi(i).value(),Dji,Dmi,Y[i](),Wm());
-	  forAll(Dmi.boundaryFieldRef(), patchi)
-	  { 
-	     setDm(this->thermo().Wi(i).value(),Dji.boundaryFieldRef()[patchi],Dmi.boundaryFieldRef()[patchi],Y[i].boundaryField()[patchi],Wm.boundaryField()[patchi]);
-	  }
-      }     
-       
-      correctJc();
+        // At the limit Yk = 1, use the self-diffusion coefficients
+        Dji = evaluate(DFuncs_[i][i], dimKinematicViscosity, p, T);
+        Dm_.set(i, max(1-Y[i],small)/max(Dm_[i]*Wm,small/Dji));
+    }       
+    correctJc();
 }
 
  template<class BasicThermophysicalTransportModel>
@@ -454,17 +447,6 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::correctJc() 
      Jc_ -= fvc::interpolate(this->alpha()*this->DEff(Y[i]))*fvc::snGrad(Y[i]);
    }  
 
-}
-
-template<class BasicThermophysicalTransportModel>
-void basicFickianTransportModel<BasicThermophysicalTransportModel>::setDm(scalar Wi, scalarField& Dii, scalarField& Dmi, const scalarField& Yi, const scalarField& Wm) const {
-  forAll(Dmi,i) {
-      if(Yi[i] > DmLimit_){
-          Dmi[i] = Dii[i];
-      } else {
-          Dmi[i] = (1 - Yi[i])/Dmi[i]/Wm[i];
-      } 
-  }
 }
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
