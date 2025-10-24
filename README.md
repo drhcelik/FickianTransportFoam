@@ -1,5 +1,5 @@
 # FickianTransportFoam 
-**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 12, 11 and 10.
+**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 13, 12, 11 and 10.
 
 Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
 ## Theory
@@ -9,7 +9,7 @@ FickianTransportFoam implements a transport model based on Fick's law using the 
 \mathbf{j}_k = -\rho D_k \nabla Y_k
 ```
 where $D_k$ is a model specific diffusion coefficient.   
-To ensure mass conservation, a correction velocity is introduced to the diffusion fluxes [1] as
+To ensure mass conservation, a correction velocity is introduced to the diffusion fluxes [2] as
 ```math
  \mathbf{j}_k = -\rho D_k \nabla Y_k + \rho Y_k \sum_{j=1}^{N} D_j \nabla Y_j 
 ```
@@ -17,7 +17,7 @@ To ensure mass conservation, a correction velocity is introduced to the diffusio
 
 Diffusion coefficients are evaluted based on two assumptions:
 1. **Mixture-averaged diffusion coefficients**  
-   Diffusion coefficients are given by Eq. 12.178 in [1]  
+   Diffusion coefficients are given by Eq. 12.178 in [2]  
    $$D_k = \left(\sum_{j\neq k} \frac{X_j}{D_{jk}} + \frac{X_k}{1-Y_k}\sum_{j\neq k} \frac{Y_j}{D_{jk}}\right)^{-1}$$  
 3. **Constant Lewis number diffusion coefficients**  
    $$D_k = \frac{\lambda}{c_p}\frac{1}{\mathrm{Le}}$$
@@ -39,7 +39,7 @@ This library implements two models for evaluating the term $\nabla\cdot\bf q$ in
     This approach is used in the native implementation of FickianFourier in OpenFOAM 
 
 > [!NOTE]
-> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which balances the heat fluxes using temperature gradients [2]. Thus, for conjugate heat transfer applications with the default coupled temperature boundary condition, the native explicit formulation should be used.
+> The implicit formulation is not compatible with the default implementation of a coupled temperature boundary condition in OpenFOAM, which balances the heat fluxes using temperature gradients [3]. Thus, for conjugate heat transfer applications with the default coupled temperature boundary condition, the native explicit formulation should be used.
     
 
 ## Why OpenFOAM's native implementation "FickianFourier" can be unstable? 
@@ -56,10 +56,10 @@ In FickianFourier this is "fixed" by adding $\epsilon$ to the denominator, which
 D_k = \frac{1-X_k}{\sum_{j\neq k} X_j/D_{jk} + \epsilon}
 ```
 This causes the diffusion coefficient to go zero when $X_k\rightarrow 1$ and negative when $X_k\gt1$. This is both unphysical and numerically unstable leading to divergent simulations.  
-(Side note: OpenFOAM uses wrong formulation (Eq. 12.176 in [1]), which is meant for evaluating diffusion flux respect to the molar
+(Side note: OpenFOAM uses wrong formulation (Eq. 12.176 in [2]), which is meant for evaluating diffusion flux respect to the molar
 average velocity)
 
-In this implementation, this issue is handled by setting $D_k = D_{kk}$, when the mass fraction is greater than a threshold (1 - selfDiffusionLimit), where $D_{kk}$ is the theoretical limit.
+In this implementation, this issue is handled by setting $D_k = D_{kk}$, when the mass fraction approaches to 1.
 
 ## Usage
 Include `libFickianTransport.so` in controlDict and select the desired model in `thermophysicalTransport`.  Available models:
@@ -86,7 +86,7 @@ Le {
 ```
 A file with Lewis numbers can be generated using [generateLewisNumbersDict.py](utilities/generateLewisNumbersDict.py) utility (use `--help` option to learn more). Note that Lewis numbers have to be selected carefully and default parameters in the script are given for simplicity only.
 
-For binary diffusion coefficients, we included the implementation of log-polynomial fit, used by Cantera [3]
+For binary diffusion coefficients, we included the implementation of log-polynomial fit, used by Cantera [4]
 ```math
  D_{jk} = \frac{1}{p} T^{3/2} \sum_{i=0}^{4} a_{jki} \log^i{T}
 ```
@@ -111,14 +111,22 @@ laminar
     // ....     
     }
     implicitHeatFlux true; //Default true
-    selfDiffusionLimit 1e-6;
+    selfDiffusionLimit 1e-6; // Only for OF versions < 13
 }
 ```
 > [!IMPORTANT]
 > Only the sensible enthalpy formulation is supported currently and the energy equation should not be solved for internal energy.
+
+
+## Citation
+
+If you use our model, please cite the publication describing its implementation [1].
+
 ## References
-[1] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
+[1] Haider, A., Morev, I., Rintanen, A., Shahin, Z., Tamadonfar, P., Karimkashi S., Wehrfritz, A., Vuorinen, V., Accelerated numerical simulations of hydrogen flames: Open-source implementation of an advanced diffusion model library in OpenFOAM
 
-[2] R. Tuominen, Coupling Serpent and OpenFOAM for neutronics - CFD multi-physics calculations. Master's thesis, Aalto university, Espoo, Helsinki, Aug. 2015
+[2] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
 
-[3] David G. Goodwin, Harry K. Moffat, Ingmar Schoegl, Raymond L. Speth, and Bryan W. Weber. Cantera: An object-oriented software toolkit for chemical kinetics, thermodynamics, and transport processes. https://www.cantera.org, 2023. Version 3.0.0.
+[3] R. Tuominen, Coupling Serpent and OpenFOAM for neutronics - CFD multi-physics calculations. Master's thesis, Aalto university, Espoo, Helsinki, Aug. 2015
+
+[4] David G. Goodwin, Harry K. Moffat, Ingmar Schoegl, Raymond L. Speth, and Bryan W. Weber. Cantera: An object-oriented software toolkit for chemical kinetics, thermodynamics, and transport processes. https://www.cantera.org, 2023. Version 3.0.0.
