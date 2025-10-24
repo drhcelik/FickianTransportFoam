@@ -1,7 +1,9 @@
 # FickianTransportFoam 
 **Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 13, 12, 11 and 10.
 
-Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland
+Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland 
+
+The related advanced tutorials are aviable in [DLBFoam-Hydrogen-Tutorials.](https://github.com/Aalto-CFD/DLBFoam-Hydrogen-Tutorials)
 ## Theory
 ### Mass diffusion fluxes
 FickianTransportFoam implements a transport model based on Fick's law using the formulation, where diffusion fluxes are evaluated with respect to the mass fraction gradient as
