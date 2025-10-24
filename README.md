@@ -86,7 +86,7 @@ Le {
 ```
 A file with Lewis numbers can be generated using [generateLewisNumbersDict.py](utilities/generateLewisNumbersDict.py) utility (use `--help` option to learn more). Note that Lewis numbers have to be selected carefully and default parameters in the script are given for simplicity only.
 
-For binary diffusion coefficients, we included the implementation of log-polynomial fit, used by Cantera [4]
+For binary diffusion coefficients, we included the [implementation of log-polynomial fit](src/ThermophysicalTransportModels/ThermophysicalTransportFunctions/binaryDiffusionCoefficientsPolynomial/binaryDiffusionCoefficientsPolynomial.H), used by Cantera [4]
 ```math
  D_{jk} = \frac{1}{p} T^{3/2} \sum_{i=0}^{4} a_{jki} \log^i{T}
 ```
@@ -114,6 +114,8 @@ laminar
     selfDiffusionLimit 1e-6; // Only for OF versions < 13
 }
 ```
+Note that since OpenFOAM 13, this implementation [was included](https://github.com/OpenFOAM/OpenFOAM-dev/commit/f9139b7a2cc053f0196fa569f9018405a1dd810b) in the release with a slightly different name and input dictionary format.
+ 
 > [!IMPORTANT]
 > Only the sensible enthalpy formulation is supported currently and the energy equation should not be solved for internal energy.
 
