@@ -127,7 +127,26 @@ Note that since OpenFOAM 13, this implementation [was included](https://github.c
 If you use our model, please cite the publication describing its implementation [1].
 
 ## References
-[1] Haider, A., Morev, I., Rintanen, A., Shahin, Z., Tamadonfar, P., Karimkashi S., Wehrfritz, A., Vuorinen, V., Accelerated numerical simulations of hydrogen flames: Open-source implementation of an advanced diffusion model library in OpenFOAM
+<a id="1">[1]</a>
+A. Haider, I. Morev, A. Rintanen, Z. Shahin, P. Tamadonfar, S. Karimkashi, A. Wehrfritz, V. Vuorinen, Accelerated numerical simulations of hydrogen flames: Open-source implementation of an advanced diffusion model library in OpenFOAM, International Journal of Hydrogen Energy, Volume 189, 152115, [10.1016/j.ijhydene.2025.152115](https://doi.org/10.1016/j.ijhydene.2025.152115) (2025)
+<details>
+<summary>BibTex</summary>
+<p>
+ 
+```
+@article{haider2025accelerated,
+ author = {Ali Haider and Ilya Morev and Aleksi Rintanen and Zin Shahin and Parsa Tamadonfar and Shervin Karimkashi and Armin Wehrfritz and Ville Vuorinen},
+ title = {{Accelerated numerical simulations of hydrogen flames: Open-source implementation of an advanced diffusion model library in OpenFOAM}},
+ journal = {International Journal of Hydrogen Energy},
+ volume = {189},
+ pages = {152115},
+ year = {2025},
+ issn = {0360-3199},
+ doi = {10.1016/j.ijhydene.2025.152115}
+}
+```
+</p>
+</details>
 
 [2] Kee, R. J., Coltrin, M. E. & Glarborg, P. Chemically Reacting Flow: Theory and Practice (John Wiley & Sons, 2003).
 
