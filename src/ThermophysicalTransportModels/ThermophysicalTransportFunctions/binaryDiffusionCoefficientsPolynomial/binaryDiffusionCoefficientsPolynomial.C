@@ -72,5 +72,4 @@ void Foam::Function2s::binaryDiffusionCoefficientsPolynomial::write(Ostream& os,
 }
 
 
-
 // ************************************************************************* //
