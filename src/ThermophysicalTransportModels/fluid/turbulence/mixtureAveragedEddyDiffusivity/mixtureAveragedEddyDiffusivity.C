@@ -51,7 +51,7 @@ mixtureAveragedEddyDiffusivity
         false
     ),
 
-    Sct_("Sct", dimless, this->coeffDict())
+    Sct_("Sct", dimless, this->typeDict())
 {
     read();
 }
@@ -71,7 +71,7 @@ mixtureAveragedEddyDiffusivity<TurbulenceThermophysicalTransportModel>::read()
         >::read()
     )
     {
-        Sct_.read(this->coeffDict());
+        Sct_.read(this->typeDict());
 
         return true;
     }

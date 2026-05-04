@@ -99,7 +99,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
 
 	if(constantLewis_) {
 	   Info << "Setting Lewis numbers " << endl;
-	   dictionary LewisNumberDict(this->coeffDict().subDict("Le"));
+       dictionary LewisNumberDict(this->typeDict().subDict("Le"));
 
            const PtrList<volScalarField>& Y = this->thermo().Y();
            for (label i=0; i<species.size(); i++)
@@ -117,7 +117,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
 	}
 	else 
 	{
-            const dictionary& Ddict = this->coeffDict().subDict("D");
+        const dictionary& Ddict = this->typeDict().subDict("D");
 
             // Read the array of specie binary mass diffusion coefficient
             // functions
@@ -177,7 +177,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
             }
         }
         
-	implicitFlux_ = this->coeffDict().lookupOrDefault("implicitHeatFlux",true);
+    implicitFlux_ = this->typeDict().lookupOrDefault("implicitHeatFlux",true);
 	Info << "Selecting "<< (implicitFlux_ ? "implicit" : "explicit") << " formulation for the heat flux" << endl;
 	
         return true;
