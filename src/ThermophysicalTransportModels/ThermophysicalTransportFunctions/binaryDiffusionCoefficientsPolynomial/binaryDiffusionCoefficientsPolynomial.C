@@ -55,7 +55,7 @@ Foam::Function2s::binaryDiffusionCoefficientsPolynomial::binaryDiffusionCoeffici
 Foam::Function2s::binaryDiffusionCoefficientsPolynomial::binaryDiffusionCoefficientsPolynomial
 (
     const word& name,
-    const unitConversions& units,
+    const unitSets& units,
     const dictionary& dict
 )
 :
@@ -66,7 +66,7 @@ Foam::Function2s::binaryDiffusionCoefficientsPolynomial::binaryDiffusionCoeffici
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
-void Foam::Function2s::binaryDiffusionCoefficientsPolynomial::write(Ostream& os, const unitConversions& units) const
+void Foam::Function2s::binaryDiffusionCoefficientsPolynomial::write(Ostream& os, const unitSets& units) const
 {
     writeEntry(os, "polynomialCoeffs", polynomialCoeffs_);
 }

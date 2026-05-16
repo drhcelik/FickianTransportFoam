@@ -79,7 +79,7 @@ public:
         binaryDiffusionCoefficientsPolynomial
         (
             const word& name,
-            const unitConversions& units,
+            const unitSets& units,
             const dictionary& dict
         );
 
@@ -113,7 +113,7 @@ public:
         }
 
         //- Write the function coefficients
-        virtual void write(Ostream& os, const unitConversions& units) const;
+        virtual void write(Ostream& os, const unitSets& units) const;
 };
 
 
