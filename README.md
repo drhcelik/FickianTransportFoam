@@ -2,7 +2,7 @@
 
 ![OpenFOAM dev](https://img.shields.io/badge/OpenFOAM--dev-20260907-brightgreen)
 
-**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 13, 12, 11 and 10.
+**Stable** mixture-averaged and specie-specific constant Lewis transport models that are missing from the current OpenFOAM release. Supported OpenFOAM versions are: 14, 13, 12, 11 and 10.
 
 Developed by Aleksi Rintanen & Ilya Morev, Aalto University, Finland 
 
