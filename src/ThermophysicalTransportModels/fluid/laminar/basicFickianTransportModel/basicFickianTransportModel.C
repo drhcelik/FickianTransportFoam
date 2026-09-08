@@ -360,7 +360,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
         for(label j = 0; j < i; j++)
         {
 
-            Dji = evaluate(DFuncs_[j][i], dimKinematicViscosity, p, T);
+             Dji = DFuncs_[j][i].value(p, T);
             dimensionedScalar Wi = this->thermo().Wi(i);
             dimensionedScalar Wj = this->thermo().Wi(j);
             Dm_[i] += Y[j]/Dji*(1/Wj + (1/Wi - 1/Wj)*Y[i]);
@@ -371,7 +371,7 @@ void basicFickianTransportModel<BasicThermophysicalTransportModel>::updateDm() c
     forAll(Dm_, i)
     {
         // At the limit Yk = 1, use the self-diffusion coefficients
-        Dji = evaluate(DFuncs_[i][i], dimKinematicViscosity, p, T);
+        Dji = DFuncs_[i][i].value(p, T);
         Dm_.set(i, max(1-Y[i],small)/max(Dm_[i]*Wm,small/Dji));
     }       
     correctJc();
