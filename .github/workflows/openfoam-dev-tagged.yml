@@ -36,7 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Install OpenFOAM-dev and LAPACK
+      - name: Install OpenFOAM-dev
         run: |
           wget -qO- https://dl.openfoam.org/gpg.key \
             | sudo tee /etc/apt/trusted.gpg.d/openfoam.asc > /dev/null
