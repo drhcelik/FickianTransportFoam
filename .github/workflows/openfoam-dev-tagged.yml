@@ -1,6 +1,6 @@
-name: DLBFoam OpenFOAM-dev test
+name: FickianTransportFoam OpenFOAM-dev test
 
-run-name: Test DLBFoam against latest tagged OpenFOAM-dev
+run-name: Test FickianTransportFoam against latest tagged OpenFOAM-dev
 
 on:
   push:
@@ -82,7 +82,7 @@ jobs:
           which wmake
           wmake -help >/dev/null
 
-      - name: Compile DLBFoam
+      - name: Compile FickianTransportFoam
         run: |
           source /opt/openfoam-dev/etc/bashrc
 
