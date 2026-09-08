@@ -253,7 +253,7 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
      tmp<fvScalarMatrix> tmpDivq
      (
         implicitFlux_ ? -fvm::laplacian(this->alpha()*this->alphaEff(), he) :
-        fvm::Su 
+        -fvm::Su 
          (
              -fvc::laplacian(this->alpha()*this->kappaEff(), this->thermo().T()),
              he
