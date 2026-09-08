@@ -250,15 +250,34 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
 {
      correctJc();
      
-     tmp<fvScalarMatrix> tmpDivq
-     (
-        implicitFlux_ ? -fvm::laplacian(this->alpha()*this->alphaEff(), he) :
-        -fvm::Su 
-         (
-             fvc::laplacian(this->alpha()*this->kappaEff(), this->thermo().T()),
-             he
-         )
-     );
+    tmp<fvScalarMatrix> tmpDivq
+    (
+        -fvm::laplacian
+        (
+            this->alpha()*this->alphaEff(),
+            he
+        )
+    );
+
+    if (!implicitFlux_)
+    {
+        tmpDivq.ref() =
+            -fvc::laplacian
+            (
+                this->alpha()*this->kappaEff(),
+                this->thermo().T()
+            );
+
+        tmpDivq.ref() -=
+            correction
+            (
+                fvm::laplacian
+                (
+                    this->alpha()*this->alphaEff(),
+                    he
+                )
+            );
+    }
      
      const PtrList<volScalarField>& Y = this->thermo().Y();
      const volScalarField& p = this->thermo().p();
