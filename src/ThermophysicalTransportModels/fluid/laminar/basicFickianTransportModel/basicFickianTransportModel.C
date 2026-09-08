@@ -31,7 +31,6 @@ License
 #include "fvmSup.H"
 #include "fvmDiv.H"
 #include "surfaceInterpolate.H"
-#include "Function2Evaluate.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -96,10 +95,11 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
     )
     {
         const speciesTable& species = this->thermo().species();
+        const dictionary& coeffDict = this->typeDict();
 
 	if(constantLewis_) {
 	   Info << "Setting Lewis numbers " << endl;
-       dictionary LewisNumberDict(this->typeDict().subDict("Le"));
+       dictionary LewisNumberDict(coeffDict.subDict("Le"));
 
            const PtrList<volScalarField>& Y = this->thermo().Y();
            for (label i=0; i<species.size(); i++)
@@ -166,10 +166,10 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
                         DFuncs_[i].set
                         (
                             j,
-                            Function2<scalar>::New(Dname,                                
-                                 dimPressure,
-                                 dimTemperature,
-                                 dimKinematicViscosity,
+                            DimensionedFunction2<scalar>::New(Dname,                                
+                                 dimensions::pressure,
+                                 dimensions::temperature,
+                                 dimensions::kinematicViscosity,
                                  Ddict).ptr()
                         );
                     }
@@ -177,7 +177,7 @@ bool basicFickianTransportModel<BasicThermophysicalTransportModel>::read()
             }
         }
         
-    implicitFlux_ = this->typeDict().lookupOrDefault("implicitHeatFlux",true);
+    implicitFlux_ = coeffDict.lookupOrDefault("implicitHeatFlux",true);
 	Info << "Selecting "<< (implicitFlux_ ? "implicit" : "explicit") << " formulation for the heat flux" << endl;
 	
         return true;

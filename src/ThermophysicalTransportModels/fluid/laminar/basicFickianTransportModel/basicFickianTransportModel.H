@@ -36,7 +36,7 @@ SourceFiles
 
 #ifndef basicFickianTransportModel_H
 #define basicFickianTransportModel_H
-#include "Function2.H"
+#include "DimensionedFunction2.H"
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -61,7 +61,7 @@ class basicFickianTransportModel
 
             //- Array of specie binary mass diffusion coefficient functions
             //  [m^2/s]
-            List<PtrList<Function2<scalar>>> DFuncs_;
+            List<PtrList<DimensionedFunction2<scalar>>> DFuncs_;
             	    
  	    void correctJc() const;
  	    
