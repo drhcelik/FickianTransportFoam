@@ -283,11 +283,11 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
      const volScalarField& p = this->thermo().p();
      const volScalarField& T = this->thermo().T();
 
-     if (!implicitFlux_) 
-     {
-     tmpDivq.ref() -=
-         correction(fvm::laplacian(this->alpha()*this->alphaEff(), he));
-     }
+//     if (!implicitFlux_) 
+//     {
+//     tmpDivq.ref() -=
+//         correction(fvm::laplacian(this->alpha()*this->alphaEff(), he));
+//     }
 
  
      surfaceScalarField sumJh
