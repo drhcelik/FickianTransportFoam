@@ -261,15 +261,14 @@ tmp<fvScalarMatrix> basicFickianTransportModel<BasicThermophysicalTransportModel
 
     if (!implicitFlux_)
     {
-        tmpDivq.ref() =
-            -fvc::laplacian
-            (
-                this->alpha()*this->kappaEff(),
-                this->thermo().T()
-            );
+        tmpDivq =
+            -fvi::laplacian
+                (
+                    this->alpha()*this->kappaEff(),
+                    this->thermo().T()
+                )
 
-        tmpDivq.ref() -=
-            correction
+            - correction
             (
                 fvm::laplacian
                 (
