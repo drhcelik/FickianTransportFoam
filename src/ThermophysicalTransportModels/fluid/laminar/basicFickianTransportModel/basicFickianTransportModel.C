@@ -26,6 +26,7 @@ License
 
 #include "basicFickianTransportModel.H"
 #include "fvcDiv.H"
+#include "fviLaplacian.H"
 #include "fvcLaplacian.H"
 #include "fvcSnGrad.H"
 #include "fvmSup.H"
